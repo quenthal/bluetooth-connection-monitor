@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
@@ -9,9 +10,10 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.util import dt as dt_util
 
 from .const import CONF_ADDRESS, CONF_BLUETOOTH_NAME, DATA_HUB, DOMAIN
-from .hub import BluetoothConnectionMonitorHub
+from .hub import AllocationSource, BluetoothConnectionMonitorHub
 
 
 async def async_setup_entry(
@@ -45,6 +47,13 @@ class BluetoothConnectionAllocationSensor(BinarySensorEntity):
             manufacturer="Bluetooth",
             model=str(bluetooth_name or "Connection allocation monitor"),
         )
+        self._allocation_signature = self._signature(
+            self._hub.allocations_for(self._address)
+        )
+        # Home Assistant cannot reconstruct an allocation change that happened
+        # before this monitor was loaded. This timestamp therefore means the last
+        # allocation state observed by this integration, beginning at setup.
+        self._last_allocation_change: datetime = dt_util.utcnow()
 
     async def async_added_to_hass(self) -> None:
         """Subscribe to allocation changes."""
@@ -52,7 +61,17 @@ class BluetoothConnectionAllocationSensor(BinarySensorEntity):
 
     @callback
     def _handle_update(self) -> None:
+        allocations = self._hub.allocations_for(self._address)
+        signature = self._signature(allocations)
+        if signature != self._allocation_signature:
+            self._allocation_signature = signature
+            self._last_allocation_change = dt_util.utcnow()
         self.async_write_ha_state()
+
+    @staticmethod
+    def _signature(allocations: list[AllocationSource]) -> tuple[str, ...]:
+        """Return the allocation identity relevant to this monitored device."""
+        return tuple(allocation.source for allocation in allocations)
 
     @property
     def available(self) -> bool:
@@ -66,50 +85,27 @@ class BluetoothConnectionAllocationSensor(BinarySensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return source and slot diagnostics."""
+        """Return a compact set of automation-friendly attributes."""
         allocations = self._hub.allocations_for(self._address)
         source_names = self._hub.source_names()
-        sources = [allocation.source for allocation in allocations]
-        named_sources = [source_names.get(source, source) for source in sources]
-        connected_via = [
-            {
-                "address": allocation.source,
-                "name": source_names.get(allocation.source, allocation.source),
-            }
+        connected_sources = [
+            self._format_source(
+                allocation.source,
+                source_names.get(allocation.source, allocation.source),
+            )
             for allocation in allocations
         ]
 
-        attributes: dict[str, Any] = {
+        return {
             "device_address": self._address,
+            "connected_via": "; ".join(connected_sources) or None,
             "allocation_count": len(allocations),
-            "sources": sources,
-            "source_names": named_sources,
-            "source_count": len(sources),
-            "connected_via": connected_via,
-            "total_slots": sum(allocation.slots for allocation in allocations),
-            "total_free_slots": sum(allocation.free for allocation in allocations),
-            "allocations": [
-                {
-                    "source": allocation.source,
-                    "source_name": source_names.get(
-                        allocation.source, allocation.source
-                    ),
-                    "slots": allocation.slots,
-                    "free": allocation.free,
-                }
-                for allocation in allocations
-            ],
+            "last_allocation_change": self._last_allocation_change,
         }
-        if len(allocations) == 1:
-            allocation = allocations[0]
-            attributes["connected_via_address"] = allocation.source
-            attributes["connected_via_name"] = source_names.get(
-                allocation.source, allocation.source
-            )
-        else:
-            attributes["connected_via_address"] = None
-            attributes["connected_via_name"] = None
 
-        if self._hub.last_error:
-            attributes["last_error"] = self._hub.last_error
-        return attributes
+    @staticmethod
+    def _format_source(source: str, source_name: str) -> str:
+        """Format one source clearly while retaining its stable address."""
+        if source_name.upper() == source.upper():
+            return source
+        return f"{source_name} ({source})"

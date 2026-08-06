@@ -61,7 +61,9 @@ class BluetoothConnectionMonitorHub:
 
         manager = get_manager()
         missing = [
-            method for method in _REQUIRED_MANAGER_METHODS if not hasattr(manager, method)
+            method
+            for method in _REQUIRED_MANAGER_METHODS
+            if not hasattr(manager, method)
         ]
         if missing:
             self._references = max(0, self._references - 1)
@@ -231,5 +233,9 @@ class BluetoothConnectionMonitorHub:
             name = getattr(scanner, "name", None)
             if not name and isinstance(details, dict):
                 name = details.get("name") or details.get("adapter")
-            names[source] = str(name or source_raw)
+            resolved_name = str(name or source_raw)
+            suffix = f" ({source})"
+            if resolved_name.upper().endswith(suffix.upper()):
+                resolved_name = resolved_name[: -len(suffix)].rstrip()
+            names[source] = resolved_name or source
         return names

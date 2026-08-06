@@ -1,36 +1,16 @@
 # Publishing checklist
 
-This repository is ready for GitHub and HACS custom-repository testing after one required edit.
-
-## 1. Replace the repository owner placeholder
-
-In:
+This repository is configured for:
 
 ```text
-custom_components/bluetooth_connection_monitor/manifest.json
+https://github.com/quenthal/bluetooth-connection-monitor
 ```
 
-replace all occurrences of:
+## 1. Repository settings
 
-```text
-YOUR_GITHUB_USERNAME
-```
+Recommended description:
 
-with your GitHub username or organization.
-
-The expected repository name is:
-
-```text
-bluetooth_connection_monitor
-```
-
-If you choose a different repository name, update both URLs accordingly.
-
-## 2. Create the GitHub repository
-
-Recommended repository description:
-
-> Exposes Home Assistant Bluetooth connection-slot allocations as automation-friendly binary sensors.
+> Expose Home Assistant Bluetooth connection allocations as automation-friendly binary sensors.
 
 Recommended GitHub topics:
 
@@ -43,31 +23,33 @@ Recommended GitHub topics:
 
 Enable GitHub Issues.
 
-## 3. Push the repository contents
+## 2. Repository structure
 
 The repository root should contain at least:
 
 ```text
 custom_components/bluetooth_connection_monitor/
-brand/icon.png
+custom_components/bluetooth_connection_monitor/brand/icon.png
 .github/workflows/validate.yml
 README.md
 LICENSE
 hacs.json
 ```
 
-## 4. Validate
+## 3. Validate
 
-The included GitHub workflow runs HACS repository validation on pushes, pull requests, a daily schedule, and manual dispatch.
+The included GitHub workflow runs HACS repository validation plus Python and JSON checks.
 
-## 5. Test through HACS
+## 4. Test through HACS
 
 Add the repository to HACS as a custom repository with category **Integration**, install it, restart Home Assistant, and add the integration through **Settings → Devices & services**.
 
-## 6. Optional release
+## 5. Release
 
-HACS can install from the default branch without a release. For cleaner version selection, create a GitHub release tagged:
+Create a GitHub release tagged:
 
 ```text
-v0.2.0
+v0.3.0
 ```
+
+Use the same version in `manifest.json`.

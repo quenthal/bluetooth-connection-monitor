@@ -28,31 +28,21 @@ An allocation is a strong diagnostic signal, but it is not an absolute proof tha
 
 ## Attributes
 
-Example:
+The sensor intentionally exposes only a compact set of attributes:
 
 ```yaml
 device_address: 78:9C:85:0B:73:FD
+connected_via: esp-bt-etuovi (A8:42:E3:91:72:C2)
 allocation_count: 1
-sources:
-  - A8:42:E3:91:72:C2
-source_names:
-  - esp-bt-etuovi
-source_count: 1
-connected_via:
-  - address: A8:42:E3:91:72:C2
-    name: esp-bt-etuovi
-connected_via_address: A8:42:E3:91:72:C2
-connected_via_name: esp-bt-etuovi
-total_slots: 1
-total_free_slots: 0
-allocations:
-  - source: A8:42:E3:91:72:C2
-    source_name: esp-bt-etuovi
-    slots: 1
-    free: 0
+last_allocation_change: 2026-08-06T20:32:11+00:00
 ```
 
-`connected_via_address` and `connected_via_name` are populated only when exactly one allocation source matches. The full `connected_via` and `sources` lists are always available.
+- `device_address`: the monitored Bluetooth address
+- `connected_via`: friendly source name and its stable source address; multiple sources are separated with `; `
+- `allocation_count`: normally `0` or `1`; a larger value exposes an unusual multi-source allocation
+- `last_allocation_change`: when this integration last observed the device's allocation source set change; after a Home Assistant restart, it begins at integration setup because earlier allocation history is not available
+
+Detailed slot and allocation structures are intentionally kept internal instead of being duplicated as entity attributes.
 
 ## Installation with HACS
 
@@ -102,26 +92,35 @@ condition:
     state: "on"
 ```
 
-Require that a particular proxy is one of the current allocation sources:
+Require one unambiguous allocation through a particular proxy:
 
 ```yaml
 condition:
-  - condition: template
-    value_template: >
-      {{ 'A8:42:E3:91:72:C2' in
-         (state_attr('binary_sensor.etuovi_connection_allocated', 'sources') or []) }}
-```
+  - condition: state
+    entity_id: binary_sensor.etuovi_connection_allocated
+    state: "on"
 
-Require an unambiguous allocation on exactly one expected proxy:
-
-```yaml
-condition:
   - condition: template
     value_template: >
       {{ state_attr(
            'binary_sensor.etuovi_connection_allocated',
-           'connected_via_address'
-         ) == 'A8:42:E3:91:72:C2' }}
+           'allocation_count'
+         ) == 1
+         and state_attr(
+           'binary_sensor.etuovi_connection_allocated',
+           'connected_via'
+         ) == 'esp-bt-etuovi (A8:42:E3:91:72:C2)' }}
+```
+
+Check how recently the allocation changed:
+
+```jinja
+{{ now() - as_datetime(
+     state_attr(
+       'binary_sensor.etuovi_connection_allocated',
+       'last_allocation_change'
+     )
+   ) }}
 ```
 
 ## Read-only behavior
@@ -136,13 +135,13 @@ The allocation methods are internal implementation details rather than part of H
 
 ## Repository publishing
 
-Before publishing, replace `YOUR_GITHUB_USERNAME` in:
+The repository metadata is configured for:
 
 ```text
-custom_components/bluetooth_connection_monitor/manifest.json
+https://github.com/quenthal/bluetooth-connection-monitor
 ```
 
-with the GitHub account or organization that owns the repository. See [PUBLISHING.md](PUBLISHING.md).
+See [PUBLISHING.md](PUBLISHING.md) for the release checklist.
 
 ## License
 
