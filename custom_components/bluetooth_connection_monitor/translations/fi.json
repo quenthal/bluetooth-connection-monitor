@@ -1,0 +1,55 @@
+{
+  "title": "Bluetooth-yhteyksien valvonta",
+  "config": {
+    "step": {
+      "user": {
+        "menu_options": {
+          "detected": "Valitse aktiivisesti allokoitu Bluetooth-laite",
+          "manual": "Syötä Bluetooth-osoite käsin"
+        }
+      },
+      "detected": {
+        "title": "Valitse Bluetooth-laite",
+        "description": "Lista sisältää laitteet, joille on parhaillaan varattu aktiivinen Bluetooth-yhteyspaikka. 'Kautta'-kohdan lähde on vain lisätieto eikä sitä lukita asetukseen.",
+        "data": {
+          "address": "Bluetooth-laite"
+        },
+        "data_description": {
+          "address": "Valitse laite, jonka yhteysallokaatiota valvotaan."
+        }
+      },
+      "manual": {
+        "title": "Syötä Bluetooth-osoite",
+        "description": "Syötä laitteen osoite muodossa AA:BB:CC:DD:EE:FF.",
+        "data": {
+          "address": "Bluetooth-osoite"
+        }
+      },
+      "name": {
+        "title": "Nimeä valvonta",
+        "description": "Bluetooth-osoite: {address}\nHavaittu Bluetooth-nimi: {bluetooth_name}",
+        "data": {
+          "name": "Nimi"
+        },
+        "data_description": {
+          "name": "Tästä tulee Home Assistantin laitteen nimi. Ehdotettua arvoa voi muokata."
+        }
+      }
+    },
+    "error": {
+      "empty_name": "Syötä nimi.",
+      "invalid_address": "Syötä kelvollinen Bluetooth MAC -osoite."
+    },
+    "abort": {
+      "already_configured": "Tätä Bluetooth-osoitetta valvotaan jo.",
+      "no_allocated_devices": "Aktiivisesti allokoituja Bluetooth-laitteita ei löytynyt. Käytä käsinsyöttöä."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "connection_allocated": {
+        "name": "Yhteys allokoitu"
+      }
+    }
+  }
+}

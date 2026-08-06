@@ -1,0 +1,55 @@
+{
+  "title": "Bluetooth Connection Monitor",
+  "config": {
+    "step": {
+      "user": {
+        "menu_options": {
+          "detected": "Choose an actively allocated Bluetooth device",
+          "manual": "Enter a Bluetooth address manually"
+        }
+      },
+      "detected": {
+        "title": "Choose a Bluetooth device",
+        "description": "The list contains devices that currently own an active Bluetooth connection slot. The source shown after 'via' is informational and is not locked into the configuration.",
+        "data": {
+          "address": "Bluetooth device"
+        },
+        "data_description": {
+          "address": "Choose the device whose connection allocation should be monitored."
+        }
+      },
+      "manual": {
+        "title": "Enter a Bluetooth address",
+        "description": "Enter the device address in AA:BB:CC:DD:EE:FF format.",
+        "data": {
+          "address": "Bluetooth address"
+        }
+      },
+      "name": {
+        "title": "Name the monitor",
+        "description": "Bluetooth address: {address}\nDetected Bluetooth name: {bluetooth_name}",
+        "data": {
+          "name": "Name"
+        },
+        "data_description": {
+          "name": "This becomes the Home Assistant device name. The suggested value is editable."
+        }
+      }
+    },
+    "error": {
+      "empty_name": "Enter a name.",
+      "invalid_address": "Enter a valid Bluetooth MAC address."
+    },
+    "abort": {
+      "already_configured": "This Bluetooth address is already monitored.",
+      "no_allocated_devices": "No actively allocated Bluetooth devices were found. Use manual entry instead."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "connection_allocated": {
+        "name": "Connection allocated"
+      }
+    }
+  }
+}
