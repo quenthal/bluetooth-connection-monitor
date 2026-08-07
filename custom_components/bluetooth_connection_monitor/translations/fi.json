@@ -3,6 +3,7 @@
   "config": {
     "step": {
       "user": {
+        "description": "Valitse, miten haluat määrittää valvottavan Bluetooth-laitteen.",
         "menu_options": {
           "detected": "Valitse aktiivisesti allokoitu Bluetooth-laite",
           "manual": "Syötä Bluetooth-osoite käsin"

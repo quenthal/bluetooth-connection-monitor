@@ -3,6 +3,7 @@
   "config": {
     "step": {
       "user": {
+        "description": "Choose how you want to select the Bluetooth device to monitor.",
         "menu_options": {
           "detected": "Choose an actively allocated Bluetooth device",
           "manual": "Enter a Bluetooth address manually"
