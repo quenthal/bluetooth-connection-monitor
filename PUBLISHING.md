@@ -1,12 +1,50 @@
 # Publishing checklist
 
-This repository is configured for:
+Repository:
 
 ```text
 https://github.com/quenthal/bluetooth-connection-monitor
 ```
 
-## 1. Repository settings
+## Versioning
+
+Use calendar versioning:
+
+```text
+YYYY.M.PATCH
+```
+
+Examples:
+
+- `2026.8.0` - first August 2026 release
+- `2026.8.1` - first patch release in August 2026
+- `2026.9.0` - first September 2026 release
+
+The version in `custom_components/bluetooth_connection_monitor/manifest.json` and the GitHub Release tag must match, except that the tag is prefixed with `v`.
+
+Example:
+
+```text
+manifest.json: 2026.8.0
+GitHub tag:     v2026.8.0
+```
+
+Do not use the Home Assistant version as a compatibility claim. Calendar versioning here describes when Bluetooth Connection Monitor itself was released.
+
+## Release workflow
+
+1. Make and test changes locally.
+2. Update the version in `custom_components/bluetooth_connection_monitor/manifest.json`.
+3. Update `CHANGELOG.md`.
+4. Commit and push to `main`.
+5. Wait for GitHub Actions to pass.
+6. Create a full GitHub Release (a tag alone is not enough for HACS release versioning).
+7. Tag the release with the matching `vYYYY.M.PATCH` version.
+8. In HACS, refresh/re-download as needed and verify the published version.
+
+Once GitHub Releases are used, HACS uses the latest release tag as the remote version. Without releases, HACS falls back to the first seven characters of the latest commit hash.
+
+## Repository settings
 
 Recommended description:
 
@@ -23,33 +61,13 @@ Recommended GitHub topics:
 
 Enable GitHub Issues.
 
-## 2. Repository structure
+## Validation
 
-The repository root should contain at least:
+The included GitHub workflow runs:
 
-```text
-custom_components/bluetooth_connection_monitor/
-custom_components/bluetooth_connection_monitor/brand/icon.png
-.github/workflows/validate.yml
-README.md
-LICENSE
-hacs.json
-```
+- HACS validation
+- Hassfest validation
+- Python compilation
+- JSON validation
 
-## 3. Validate
-
-The included GitHub workflow runs HACS repository validation plus Python and JSON checks.
-
-## 4. Test through HACS
-
-Add the repository to HACS as a custom repository with category **Integration**, install it, restart Home Assistant, and add the integration through **Settings → Devices & services**.
-
-## 5. Release
-
-Create a GitHub release tagged:
-
-```text
-v0.3.0
-```
-
-Use the same version in `manifest.json`.
+For a future submission to the default HACS repository, publish a full GitHub Release only after the validation actions pass.

@@ -11,20 +11,33 @@ permissions: {}
 
 jobs:
   validate-hacs:
+    name: HACS Validation
     runs-on: ubuntu-latest
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
       - name: HACS validation
         uses: hacs/action@main
         with:
           category: integration
 
-  validate-python-and-json:
+  validate-hassfest:
+    name: Hassfest Validation
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+      - name: Hassfest validation
+        uses: home-assistant/actions/hassfest@master
+
+  validate-python-and-json:
+    name: Python and JSON Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
       - name: Compile Python files

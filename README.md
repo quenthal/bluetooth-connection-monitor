@@ -1,30 +1,46 @@
 # Bluetooth Connection Monitor
 
-A lightweight Home Assistant custom integration that exposes Home Assistant's existing Bluetooth connection-slot allocations as binary sensors.
+A lightweight Home Assistant custom integration that exposes Home Assistant's existing Bluetooth connection allocations as binary sensors for automations.
 
-It does **not** scan, connect, poll, reserve slots, or send Bluetooth traffic. It only reads the current allocation snapshot and subscribes to allocation changes already maintained by Home Assistant Core.
+The integration is completely read-only. It does **not** scan, connect, poll, reserve Bluetooth slots, or generate Bluetooth traffic. It only reads the allocation state already maintained by Home Assistant Core and subscribes to allocation changes.
 
 ## Features
 
 - One binary sensor per monitored Bluetooth address
 - UI configuration flow
 - Choose from currently allocated devices or enter an address manually
-- Editable name suggestion from Home Assistant's Bluetooth discovery cache
-- Shows the current Bluetooth proxy/adapter source as attributes
-- Supports the uncommon case where an address appears allocated on multiple sources
+- Editable device-name suggestion from Home Assistant's Bluetooth discovery cache
+- Shows the current Bluetooth proxy/adapter in a compact `connected_via` attribute
 - One shared, read-only allocation listener for all configured monitors
 - English and Finnish UI translations
-- HACS-compatible repository layout
+- HACS compatible
 
-## Sensor meaning
+## Sensor state
 
 The binary sensor is:
 
-- **On**: the Bluetooth address appears in at least one source's active connection-slot allocation
-- **Off**: the address does not appear in any current allocation
-- **Unavailable**: the allocation feed could not be initialized or an unexpected allocation payload was received
+- **On**: the Bluetooth address appears in at least one active connection allocation
+- **Off**: the Bluetooth address does not appear in any current allocation
+- **Unavailable**: the allocation feed could not be initialized or returned an unexpected payload
 
-An allocation is a strong diagnostic signal, but it is not an absolute proof that a GATT operation will succeed at that exact moment.
+An allocation is a strong diagnostic signal, but it is not an absolute guarantee that an individual GATT operation will succeed at that exact moment.
+
+### Very brief allocation changes
+
+Normal Bluetooth connection management can occasionally produce very brief allocation changes, including transitions lasting only tens or hundreds of milliseconds. Bluetooth Connection Monitor intentionally exposes these changes without debounce or filtering.
+
+If an automation should ignore short interruptions, use Home Assistant's built-in `for:` option in the trigger or condition, for example:
+
+```yaml
+trigger:
+  - platform: state
+    entity_id: binary_sensor.etuovi_connection_allocated
+    to: "off"
+    for:
+      milliseconds: 500
+```
+
+This keeps the integration a faithful read-only view of Home Assistant's allocation state while allowing each automation to choose its own stability requirement.
 
 ## Attributes
 
@@ -37,18 +53,20 @@ allocation_count: 1
 last_allocation_change: 2026-08-06T20:32:11+00:00
 ```
 
-- `device_address`: the monitored Bluetooth address
-- `connected_via`: friendly source name and its stable source address; multiple sources are separated with `; `
-- `allocation_count`: normally `0` or `1`; a larger value exposes an unusual multi-source allocation
-- `last_allocation_change`: when this integration last observed the device's allocation source set change; after a Home Assistant restart, it begins at integration setup because earlier allocation history is not available
+| Attribute | Description |
+| --- | --- |
+| `device_address` | Bluetooth address being monitored |
+| `connected_via` | Friendly source name and stable source address; multiple sources are separated with `; ` |
+| `allocation_count` | Number of current allocation sources; normally `0` or `1` |
+| `last_allocation_change` | When this integration last observed the allocation source set change |
 
-Detailed slot and allocation structures are intentionally kept internal instead of being duplicated as entity attributes.
+After a Home Assistant restart, `last_allocation_change` starts at integration setup because allocation history from before startup is not available.
 
 ## Installation with HACS
 
 1. Open HACS.
-2. Open the menu and choose **Custom repositories**.
-3. Add this GitHub repository as category **Integration**.
+2. Open **Custom repositories**.
+3. Add `https://github.com/quenthal/bluetooth-connection-monitor` as category **Integration**.
 4. Install **Bluetooth Connection Monitor**.
 5. Restart Home Assistant.
 
@@ -72,7 +90,7 @@ Restart Home Assistant.
 
 Open:
 
-**Settings → Devices & services → Add integration → Bluetooth Connection Monitor**
+**Settings -> Devices & services -> Add integration -> Bluetooth Connection Monitor**
 
 Choose either:
 
@@ -123,25 +141,33 @@ Check how recently the allocation changed:
    ) }}
 ```
 
-## Read-only behavior
+## Read-only operation
 
-The integration only calls Home Assistant's current-allocation reader and registers a callback for allocation changes. It does not request a scanner, connect to a device, reserve a slot, or modify Bluetooth manager state.
+Bluetooth Connection Monitor never creates Bluetooth connections or reserves Bluetooth slots. It only:
 
-## Compatibility note
+- reads the current allocation snapshot
+- subscribes to allocation changes
+- updates Home Assistant entities
 
-Home Assistant exposes allocation subscriptions through its Bluetooth manager and WebSocket API. This integration follows the same manager snapshot-and-callback path used by Home Assistant's Bluetooth connection monitor UI.
+## Compatibility
 
-The allocation methods are internal implementation details rather than part of Home Assistant's documented public Bluetooth integration API. A future Home Assistant release may therefore require a small compatibility update. The integration checks the expected API during setup and logs a clear error instead of silently failing.
+The integration follows the same Bluetooth allocation information used internally by Home Assistant's Bluetooth connection monitor UI.
 
-## Repository publishing
+The allocation methods are currently internal Home Assistant implementation details rather than part of the documented public Bluetooth integration API. A future Home Assistant release may therefore occasionally require a small compatibility update. The integration validates the expected API during startup and logs a clear error if it is unavailable.
 
-The repository metadata is configured for:
+## Versioning
+
+Bluetooth Connection Monitor uses calendar versioning in the form:
 
 ```text
-https://github.com/quenthal/bluetooth-connection-monitor
+YYYY.M.PATCH
 ```
 
-See [PUBLISHING.md](PUBLISHING.md) for the release checklist.
+For example, `2026.8.0` is the first release made in August 2026. Additional compatible fixes in the same month become `2026.8.1`, `2026.8.2`, and so on.
+
+The calendar version identifies this integration's release date. It does **not** mean that the integration requires the matching Home Assistant release unless a minimum Home Assistant version is explicitly documented.
+
+GitHub Release tags use the same version prefixed with `v`, for example `v2026.8.0`.
 
 ## License
 
