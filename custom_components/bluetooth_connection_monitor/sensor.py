@@ -43,6 +43,9 @@ class BluetoothFreeSlotsSensor(SensorEntity):
 
     _attr_has_entity_name = True
     _attr_state_class = SensorStateClass.MEASUREMENT
+    # The address list changes with every allocation; recording it would store
+    # a new attribute row each time.
+    _unrecorded_attributes = frozenset({"allocated_addresses"})
 
     def __init__(
         self,

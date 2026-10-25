@@ -32,7 +32,7 @@ async def test_free_slot_sensors(hass: HomeAssistant, manager: FakeManager) -> N
     assert state.attributes["source_address"] == PROXY_A
     assert state.attributes["connection_slots"] == 3
     assert state.attributes["allocated_addresses"] == [DEVICE]
-    assert state.name == "Bluetooth connection slots proxy-a free connection slots"
+    assert state.name == "Bluetooth connection slots proxy-a"
     assert _entity_id(hass, "HCI0-PASSIVE") is None
 
     manager.set_allocation(PROXY_B, [], slots=4)

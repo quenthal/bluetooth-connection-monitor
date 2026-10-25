@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026.10.1
+
+### Fixed
+
+- `last_allocation_change` and `allocated_addresses` are no longer stored in the recorder database. They changed with every allocation and created a new attribute row each time.
+- The integration's own devices no longer show "Bluetooth" as the manufacturer.
+- Free connection-slot sensors on the *Bluetooth connection slots* device are named after the adapter or proxy only, for example *Bluetooth connection slots proxy-a*, instead of repeating "free connection slots". Existing entity IDs are kept.
+- An unreadable scanner name list is logged at debug level instead of as an error on every state update.
+
 ## 2026.10.0
 
 Requires Home Assistant 2026.8.0 or newer.
