@@ -63,7 +63,7 @@
         "name": "Free connection slots"
       },
       "free_slots_source": {
-        "name": "{source} free connection slots"
+        "name": "{source}"
       }
     }
   },

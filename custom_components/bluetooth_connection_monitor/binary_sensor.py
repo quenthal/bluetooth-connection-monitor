@@ -40,6 +40,9 @@ class BluetoothConnectionAllocationSensor(BinarySensorEntity):
     _attr_has_entity_name = True
     _attr_translation_key = "connection_allocated"
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
+    # A unique timestamp per change would store a new attribute row for every
+    # transition; the recorded state history already holds the change times.
+    _unrecorded_attributes = frozenset({"last_allocation_change"})
 
     def __init__(
         self,
@@ -60,6 +63,9 @@ class BluetoothConnectionAllocationSensor(BinarySensorEntity):
             self._attr_device_info = DeviceInfo(
                 identifiers={(DOMAIN, self._address)},
                 name=entry.title,
+                # Clears the misleading "Bluetooth" set by releases before
+                # 2026.10.1.
+                manufacturer=None,
                 model=str(bluetooth_name or "Connection allocation monitor"),
             )
         entry.runtime_data.links[self._address] = device.id if device else None

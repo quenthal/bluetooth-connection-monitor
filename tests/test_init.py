@@ -239,6 +239,25 @@ async def test_own_device_without_match(
     assert device.model == "Front door lock"
 
 
+async def test_own_device_clears_old_manufacturer(
+    hass: HomeAssistant, manager: FakeManager
+) -> None:
+    """The "Bluetooth" manufacturer of older releases is removed."""
+    entry = device_entry()
+    entry.add_to_hass(hass)
+    dr.async_get(hass).async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, DEVICE)},
+        name="Front door",
+        manufacturer="Bluetooth",
+    )
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    entity = er.async_get(hass).async_get(_entity_id(hass))
+    assert dr.async_get(hass).async_get(entity.device_id).manufacturer is None
+
+
 async def test_links_to_existing_device(
     hass: HomeAssistant, manager: FakeManager
 ) -> None:

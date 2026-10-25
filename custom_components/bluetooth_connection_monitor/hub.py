@@ -102,7 +102,8 @@ def async_source_names(hass: HomeAssistant) -> dict[str, str]:
     try:
         scanners = async_current_scanners(hass)
     except Exception:
-        _LOGGER.exception("Unable to read Bluetooth scanner names")
+        # Called for every state write; names are cosmetic, so stay quiet.
+        _LOGGER.debug("Unable to read Bluetooth scanner names", exc_info=True)
         return names
 
     for scanner in scanners:

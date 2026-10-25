@@ -63,7 +63,7 @@
         "name": "Vapaat yhteyspaikat"
       },
       "free_slots_source": {
-        "name": "{source} vapaat yhteyspaikat"
+        "name": "{source}"
       }
     }
   },

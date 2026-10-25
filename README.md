@@ -190,6 +190,24 @@ Bluetooth Connection Monitor never creates Bluetooth connections or reserves Blu
 
 **Settings -> Devices & services -> Bluetooth Connection Monitor -> ⋮ -> Download diagnostics** returns the current allocation snapshot, the device placement of the sensors and the latest allocation error. The file contains Bluetooth addresses; review it before sharing it publicly.
 
+## History and database
+
+The integration is designed to keep Home Assistant's database small:
+
+- A state is only recorded when the sensor's state or recorded attributes actually change; repeated identical updates are not stored.
+- Attributes that change with every allocation (`last_allocation_change` and `allocated_addresses`) are visible on the entity but not stored in the recorder. Their information is already in the recorded state history.
+- Free connection-slot sensors have long-term statistics (one row per sensor per hour), like any other measurement sensor.
+- Recorded states are removed by Home Assistant's normal purge (`purge_keep_days`, 10 days by default).
+
+A device that connects and disconnects very often produces one state row per change. If that is too much, exclude the entity from the recorder:
+
+```yaml
+recorder:
+  exclude:
+    entities:
+      - binary_sensor.front_door_lock_connection_allocated
+```
+
 ## Compatibility
 
 The integration follows the same Bluetooth allocation information used internally by Home Assistant's Bluetooth connection monitor UI.
