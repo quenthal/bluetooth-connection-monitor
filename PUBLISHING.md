@@ -33,11 +33,11 @@ Do not use the Home Assistant version as a compatibility claim. Calendar version
 
 ## Release workflow
 
-1. Make and test changes locally.
+1. Make changes in a branch and run the tests and Ruff locally (see *Development* in `README.md`).
 2. Update the version in `custom_components/bluetooth_connection_monitor/manifest.json`.
-3. Update `CHANGELOG.md`.
-4. Commit and push to `main`.
-5. Wait for GitHub Actions to pass.
+3. Update `CHANGELOG.md`; list breaking changes separately.
+4. If the minimum Home Assistant version changes, update `hacs.json`, `README.md` and the minimum version in the test matrix of `.github/workflows/validate.yml`.
+5. Open a pull request, wait for GitHub Actions to pass and merge it to `main`.
 6. Create a full GitHub Release (a tag alone is not enough for HACS release versioning).
 7. Tag the release with the matching `vYYYY.M.PATCH` version.
 8. In HACS, refresh/re-download as needed and verify the published version.
@@ -67,7 +67,8 @@ The included GitHub workflow runs:
 
 - HACS validation
 - Hassfest validation
-- Python compilation
+- Ruff lint and format check
 - JSON validation
+- Tests against the minimum supported and the latest Home Assistant version
 
 For a future submission to the default HACS repository, publish a full GitHub Release only after the validation actions pass.
