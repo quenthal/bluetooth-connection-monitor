@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026.10.0
+
+Requires Home Assistant 2026.8.0 or newer.
+
+### Breaking changes
+
+- The binary sensor is now shown on the existing device of another integration that has the same Bluetooth address. The integration's own device is then removed. Entity IDs, history and automations are not affected, but dashboards or automations that target the old *device* need to be pointed at the new one.
+- The binary sensor now uses the `connectivity` device class, so the UI shows *Connected* / *Disconnected* instead of *On* / *Off*. The state values stay `on` / `off`.
+- Icons are defined in `icons.json`; a customized icon set on the entity keeps working.
+
+### Added
+
+- Optional free connection-slot sensors per Bluetooth adapter and proxy.
+- Diagnostics download with the allocation snapshot, sensor placement and latest error.
+- Repair issue when Home Assistant's allocation API is incompatible.
+- Manual address entry accepts `AA-BB-CC-DD-EE-FF` and `AABBCCDDEEFF`.
+- Test suite and Ruff linting in CI, run against the minimum and latest Home Assistant.
+
+### Fixed
+
+- A sensor no longer stays *on* after its Bluetooth proxy disappears on Home Assistant versions that do not send an allocation update for a removed proxy.
+- One source with unexpected allocation data no longer makes every sensor unavailable; sensors stay available when their state is still known.
+- A temporary error while starting the allocation listener is retried instead of failing permanently.
+- Already monitored devices are no longer offered in the device list of the configuration flow.
+- Source names in the device list and in `connected_via` are now formatted the same way.
+
 ## 2026.8.0
 
 First calendar-versioned release.

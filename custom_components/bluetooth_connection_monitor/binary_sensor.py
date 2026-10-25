@@ -5,25 +5,33 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from .const import CONF_ADDRESS, CONF_BLUETOOTH_NAME, DATA_HUB, DOMAIN
-from .hub import AllocationSource, BluetoothConnectionMonitorHub
+from .device_link import BluetoothConnectionMonitorConfigEntry, async_find_linked_device
+from .hub import (
+    AllocationSource,
+    BluetoothConnectionMonitorHub,
+    async_source_names,
+    format_source,
+)
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: BluetoothConnectionMonitorConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the allocation binary sensor."""
-    hub: BluetoothConnectionMonitorHub = hass.data[DOMAIN][DATA_HUB]
-    async_add_entities([BluetoothConnectionAllocationSensor(entry, hub)])
+    hub = hass.data[DATA_HUB]
+    async_add_entities([BluetoothConnectionAllocationSensor(hass, entry, hub)])
 
 
 class BluetoothConnectionAllocationSensor(BinarySensorEntity):
@@ -31,22 +39,31 @@ class BluetoothConnectionAllocationSensor(BinarySensorEntity):
 
     _attr_has_entity_name = True
     _attr_translation_key = "connection_allocated"
-    _attr_icon = "mdi:bluetooth-connect"
+    _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
 
     def __init__(
-        self, entry: ConfigEntry, hub: BluetoothConnectionMonitorHub
+        self,
+        hass: HomeAssistant,
+        entry: BluetoothConnectionMonitorConfigEntry,
+        hub: BluetoothConnectionMonitorHub,
     ) -> None:
-        self._entry = entry
         self._hub = hub
         self._address = str(entry.data[CONF_ADDRESS]).upper()
-        bluetooth_name = entry.data.get(CONF_BLUETOOTH_NAME)
         self._attr_unique_id = self._address
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, self._address)},
-            name=entry.title,
-            manufacturer="Bluetooth",
-            model=str(bluetooth_name or "Connection allocation monitor"),
-        )
+
+        # Show the sensor on the device's own page when another integration
+        # already knows the device by its Bluetooth address.
+        if (device := async_find_linked_device(hass, self._address)) is not None:
+            self.device_entry = device
+        else:
+            bluetooth_name = entry.data.get(CONF_BLUETOOTH_NAME)
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, self._address)},
+                name=entry.title,
+                model=str(bluetooth_name or "Connection allocation monitor"),
+            )
+        entry.runtime_data.links[self._address] = device.id if device else None
+
         self._allocation_signature = self._signature(
             self._hub.allocations_for(self._address)
         )
@@ -75,8 +92,11 @@ class BluetoothConnectionAllocationSensor(BinarySensorEntity):
 
     @property
     def available(self) -> bool:
-        """Return whether the Home Assistant allocation feed is usable."""
-        return self._hub.available
+        """Return whether the allocation state of this address is known."""
+        if not self._hub.available:
+            return False
+        # A missing allocation only means "off" when every source was readable.
+        return self._hub.complete or bool(self._hub.allocations_for(self._address))
 
     @property
     def is_on(self) -> bool:
@@ -87,9 +107,9 @@ class BluetoothConnectionAllocationSensor(BinarySensorEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return a compact set of automation-friendly attributes."""
         allocations = self._hub.allocations_for(self._address)
-        source_names = self._hub.source_names()
+        source_names = async_source_names(self.hass)
         connected_sources = [
-            self._format_source(
+            format_source(
                 allocation.source,
                 source_names.get(allocation.source, allocation.source),
             )
@@ -102,10 +122,3 @@ class BluetoothConnectionAllocationSensor(BinarySensorEntity):
             "allocation_count": len(allocations),
             "last_allocation_change": self._last_allocation_change,
         }
-
-    @staticmethod
-    def _format_source(source: str, source_name: str) -> str:
-        """Format one source clearly while retaining its stable address."""
-        if source_name.upper() == source.upper():
-            return source
-        return f"{source_name} ({source})"

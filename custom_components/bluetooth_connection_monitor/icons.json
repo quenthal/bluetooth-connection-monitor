@@ -1,0 +1,20 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "connection_allocated": {
+        "default": "mdi:bluetooth",
+        "state": {
+          "on": "mdi:bluetooth-connect"
+        }
+      }
+    },
+    "sensor": {
+      "free_slots": {
+        "default": "mdi:bluetooth-settings"
+      },
+      "free_slots_source": {
+        "default": "mdi:bluetooth-settings"
+      }
+    }
+  }
+}
