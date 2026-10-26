@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026.10.2
+
+### Added
+
+- Choose the device a sensor is shown on, while adding a monitor or later in its options. Connection-slot sensors can be placed per adapter or proxy. A chosen device is kept across restarts.
+- Repair issue when a chosen device has been removed; the sensor then falls back to automatic placement.
+- Diagnostics include the chosen devices.
+
+### Fixed
+
+- When several integrations register the same Bluetooth address, the device of a Bluetooth integration is preferred. Previously a Yale lock's sensor could end up on the device of the Yale cloud integration instead of the Yale Bluetooth integration.
+
 ## 2026.10.1
 
 ### Fixed

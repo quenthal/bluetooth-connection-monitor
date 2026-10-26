@@ -14,6 +14,8 @@ DOMAIN = "bluetooth_connection_monitor"
 
 CONF_ADDRESS = "address"
 CONF_BLUETOOTH_NAME = "bluetooth_name"
+CONF_DEVICE_ID = "device_id"
+CONF_DEVICE_LINKS = "device_links"
 CONF_ENTRY_TYPE = "entry_type"
 CONF_NAME = "name"
 
@@ -30,5 +32,6 @@ PLATFORMS_BY_ENTRY_TYPE = {
 }
 
 ISSUE_INCOMPATIBLE_API = "incompatible_api"
+ISSUE_CHOSEN_DEVICE_MISSING = "chosen_device_missing"
 
 DATA_HUB: HassKey[BluetoothConnectionMonitorHub] = HassKey(DOMAIN)

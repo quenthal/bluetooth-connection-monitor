@@ -10,22 +10,36 @@ from habluetooth import get_manager
 import voluptuous as vol
 
 from homeassistant.components.bluetooth import async_discovered_service_info
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlowWithReload,
+)
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import selector
+from homeassistant.helpers import device_registry as dr, selector
 from homeassistant.helpers.device_registry import format_mac
 
 from .const import (
     CONF_ADDRESS,
     CONF_BLUETOOTH_NAME,
+    CONF_DEVICE_ID,
+    CONF_DEVICE_LINKS,
     CONF_ENTRY_TYPE,
     CONF_NAME,
+    DATA_HUB,
     DOMAIN,
     ENTRY_TYPE_DEVICE,
     ENTRY_TYPE_SLOTS,
     SLOTS_UNIQUE_ID,
 )
-from .hub import AllocationSource, async_source_names, parse_allocations
+from .device_link import async_is_own_device
+from .hub import (
+    AllocationSource,
+    async_source_names,
+    format_source,
+    parse_allocations,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -62,6 +76,17 @@ def _async_bluetooth_names(hass: HomeAssistant) -> dict[str, str]:
     return names
 
 
+def _device_schema_field(key: str) -> dict[vol.Optional, selector.DeviceSelector]:
+    return {vol.Optional(key): selector.DeviceSelector()}
+
+
+def _validate_device(
+    hass: HomeAssistant, device_id: str | None, key: str, errors: dict[str, str]
+) -> None:
+    if device_id and async_is_own_device(hass, device_id):
+        errors[key] = "own_device"
+
+
 def _normalize_address(address: str) -> str:
     """Normalize common MAC-address notations to AA:BB:CC:DD:EE:FF."""
     return format_mac(address.strip()).upper()
@@ -71,6 +96,14 @@ class BluetoothConnectionMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Bluetooth Connection Monitor."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: ConfigEntry,
+    ) -> BluetoothConnectionMonitorOptionsFlow:
+        """Return the options flow."""
+        return BluetoothConnectionMonitorOptionsFlow()
 
     def __init__(self) -> None:
         self._selected_address: str | None = None
@@ -172,9 +205,11 @@ class BluetoothConnectionMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         if user_input is not None:
             name = str(user_input[CONF_NAME]).strip()
+            device_id = user_input.get(CONF_DEVICE_ID)
             if not name:
                 errors[CONF_NAME] = "empty_name"
-            else:
+            _validate_device(self.hass, device_id, CONF_DEVICE_ID, errors)
+            if not errors:
                 return self.async_create_entry(
                     title=name,
                     data={
@@ -182,6 +217,7 @@ class BluetoothConnectionMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
                         CONF_ADDRESS: self._selected_address,
                         CONF_BLUETOOTH_NAME: self._selected_bluetooth_name,
                     },
+                    options={CONF_DEVICE_ID: device_id} if device_id else {},
                 )
 
         return self.async_show_form(
@@ -191,7 +227,8 @@ class BluetoothConnectionMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Required(
                         CONF_NAME,
                         default=self._suggested_name(),
-                    ): selector.TextSelector()
+                    ): selector.TextSelector(),
+                    **_device_schema_field(CONF_DEVICE_ID),
                 }
             ),
             errors=errors,
@@ -229,3 +266,103 @@ class BluetoothConnectionMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
             return self._selected_bluetooth_name
         assert self._selected_address is not None
         return f"Bluetooth device {self._selected_address}"
+
+
+class BluetoothConnectionMonitorOptionsFlow(OptionsFlowWithReload):
+    """Choose the devices the sensors are shown on."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Show the options of the entry type."""
+        if self.config_entry.data.get(CONF_ENTRY_TYPE) == ENTRY_TYPE_SLOTS:
+            return await self.async_step_slots()
+        return await self.async_step_device()
+
+    async def async_step_device(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Choose the device of a monitored Bluetooth address."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            device_id = user_input.get(CONF_DEVICE_ID)
+            _validate_device(self.hass, device_id, CONF_DEVICE_ID, errors)
+            if not errors:
+                return self.async_create_entry(
+                    data={CONF_DEVICE_ID: device_id} if device_id else {}
+                )
+
+        address = str(self.config_entry.data[CONF_ADDRESS])
+        return self.async_show_form(
+            step_id="device",
+            data_schema=self.add_suggested_values_to_schema(
+                vol.Schema(_device_schema_field(CONF_DEVICE_ID)),
+                user_input or self.config_entry.options,
+            ),
+            errors=errors,
+            description_placeholders={
+                "address": address,
+                "current_device": self._current_device_name(address),
+            },
+        )
+
+    async def async_step_slots(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Choose the device of each Bluetooth adapter or proxy."""
+        current: dict[str, str] = dict(
+            self.config_entry.options.get(CONF_DEVICE_LINKS, {})
+        )
+        sources = set(current)
+        if (hub := self.hass.data.get(DATA_HUB)) is not None:
+            sources.update(allocation.source for allocation in hub.slot_sources())
+        if not sources:
+            return self.async_abort(reason="no_slot_sources")
+
+        # Field keys are shown as labels; the sources are only known at runtime,
+        # so they cannot have translations.
+        names = async_source_names(self.hass)
+        fields = {
+            format_source(source, names.get(source, source)): source
+            for source in sorted(sources)
+        }
+
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            links: dict[str, str] = {}
+            for key, source in fields.items():
+                if device_id := user_input.get(key):
+                    _validate_device(self.hass, device_id, key, errors)
+                    links[source] = device_id
+            if not errors:
+                return self.async_create_entry(
+                    data={CONF_DEVICE_LINKS: links} if links else {}
+                )
+
+        schema: dict[vol.Optional, selector.DeviceSelector] = {}
+        for key in fields:
+            schema.update(_device_schema_field(key))
+        suggested = user_input or {
+            key: current[source] for key, source in fields.items() if source in current
+        }
+        return self.async_show_form(
+            step_id="slots",
+            data_schema=self.add_suggested_values_to_schema(
+                vol.Schema(schema), suggested
+            ),
+            errors=errors,
+        )
+
+    @callback
+    def _current_device_name(self, address: str) -> str:
+        """Return the name of the device the sensor is currently shown on."""
+        runtime_data = getattr(self.config_entry, "runtime_data", None)
+        linked_device_id = (
+            runtime_data.links.get(address.upper()) if runtime_data else None
+        )
+        if linked_device_id is None:
+            return "-"
+        device = dr.async_get(self.hass).async_get(linked_device_id)
+        if device is None:
+            return "-"
+        return device.name_by_user or device.name or linked_device_id

@@ -29,12 +29,14 @@
       },
       "name": {
         "title": "Nimeä valvonta",
-        "description": "Bluetooth-osoite: {address}\nHavaittu Bluetooth-nimi: {bluetooth_name}\n\nJos jollakin toisella integraatiolla on jo laite tällä Bluetooth-osoitteella, sensori näytetään sen laitteen yhteydessä.",
+        "description": "Bluetooth-osoite: {address}\nHavaittu Bluetooth-nimi: {bluetooth_name}\n\nSensori näytetään toisen integraation laitteessa, jolla on tämä Bluetooth-osoite. Bluetooth-integraation laite valitaan pilvi-integraation laitteen sijaan. Voit myös valita laitteen itse alta.",
         "data": {
-          "name": "Nimi"
+          "name": "Nimi",
+          "device_id": "Näytä laitteessa"
         },
         "data_description": {
-          "name": "Käytetään Home Assistantin laitteen nimenä, jos tällä Bluetooth-osoitteella ei ole jo laitetta. Ehdotettua arvoa voi muokata."
+          "name": "Käytetään Home Assistantin laitteen nimenä, jos sensoria ei näytetä toisessa laitteessa. Ehdotettua arvoa voi muokata.",
+          "device_id": "Valinnainen. Jätä tyhjäksi, niin laite haetaan automaattisesti Bluetooth-osoitteella. Valittu laite pysyy, kunnes vaihdat sen täällä."
         }
       },
       "connection_slots": {
@@ -44,12 +46,37 @@
     },
     "error": {
       "empty_name": "Syötä nimi.",
-      "invalid_address": "Syötä kelvollinen Bluetooth MAC -osoite."
+      "invalid_address": "Syötä kelvollinen Bluetooth MAC -osoite.",
+      "own_device": "Valitse jonkin toisen integraation laite."
     },
     "abort": {
       "already_configured": "Tätä Bluetooth-osoitetta valvotaan jo.",
       "slots_already_configured": "Yhteyspaikkoja valvotaan jo.",
       "no_allocated_devices": "Valvomattomia, aktiivisesti allokoituja Bluetooth-laitteita ei löytynyt. Käytä käsinsyöttöä."
+    }
+  },
+  "options": {
+    "step": {
+      "device": {
+        "title": "Sensorin laite",
+        "description": "Bluetooth-osoite: {address}\nNäytetään nyt laitteessa: {current_device}",
+        "data": {
+          "device_id": "Näytä laitteessa"
+        },
+        "data_description": {
+          "device_id": "Valinnainen. Jätä tyhjäksi, niin laite haetaan automaattisesti Bluetooth-osoitteella. Valittu laite pysyy, kunnes vaihdat sen täällä."
+        }
+      },
+      "slots": {
+        "title": "Paikkasensoreiden laitteet",
+        "description": "Valitse halutessasi laite, jossa kunkin sovittimen tai välityslaitteen sensori näytetään. Jätä kenttä tyhjäksi, niin laite haetaan automaattisesti Bluetooth-osoitteella."
+      }
+    },
+    "error": {
+      "own_device": "Valitse jonkin toisen integraation laite."
+    },
+    "abort": {
+      "no_slot_sources": "Yhteyspaikkoja ilmoittavia Bluetooth-sovittimia tai -välityslaitteita ei löytynyt."
     }
   },
   "entity": {
@@ -71,6 +98,10 @@
     "incompatible_api": {
       "title": "Bluetooth-yhteyksien valvonta ei ole yhteensopiva tämän Home Assistant -version kanssa",
       "description": "Home Assistantin Bluetooth-integraatio ei enää tarjoa yhteysallokaatiometodeja, joita tämä integraatio lukee ({methods}). Valvonnat pysyvät poissa käytöstä, kunnes asennetaan yhteensopiva Bluetooth Connection Monitor -versio."
+    },
+    "chosen_device_missing": {
+      "title": "Valvonnan {entry} valittua laitetta ei enää ole",
+      "description": "Bluetooth-osoitteelle {address} valittu laite on poistettu, joten sensorin laite valitaan nyt automaattisesti. Valitse laite uudelleen valvonnan {entry} asetuksista kohdassa Asetukset -> Laitteet ja palvelut -> Bluetooth Connection Monitor."
     }
   }
 }

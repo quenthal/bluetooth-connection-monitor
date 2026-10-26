@@ -19,6 +19,8 @@ async def async_get_config_entry_diagnostics(
             "title": entry.title,
             "data": dict(entry.data),
         },
+        "entry_options": dict(entry.options),
         "device_links": dict(entry.runtime_data.links),
+        "chosen_devices": dict(entry.runtime_data.chosen_devices),
         "hub": hass.data[DATA_HUB].as_diagnostics(),
     }
