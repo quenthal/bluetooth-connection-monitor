@@ -14,6 +14,7 @@ from .const import (
 from .device_link import (
     BluetoothConnectionMonitorConfigEntry,
     MonitorRuntimeData,
+    async_delete_entry_issues,
     async_remove_unused_devices,
     async_track_device_links,
 )
@@ -52,3 +53,10 @@ async def async_unload_entry(
 
     hass.data[DATA_HUB].async_release()
     return True
+
+
+async def async_remove_entry(
+    hass: HomeAssistant, entry: BluetoothConnectionMonitorConfigEntry
+) -> None:
+    """Clean up after a removed config entry."""
+    async_delete_entry_issues(hass, entry)

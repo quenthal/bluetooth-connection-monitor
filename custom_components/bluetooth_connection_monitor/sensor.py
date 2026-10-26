@@ -9,8 +9,8 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DATA_HUB, DOMAIN, SLOTS_UNIQUE_ID
-from .device_link import BluetoothConnectionMonitorConfigEntry, async_find_linked_device
+from .const import CONF_DEVICE_LINKS, DATA_HUB, DOMAIN, SLOTS_UNIQUE_ID
+from .device_link import BluetoothConnectionMonitorConfigEntry, async_link_entity_device
 from .hub import BluetoothConnectionMonitorHub, async_source_names
 
 
@@ -60,7 +60,10 @@ class BluetoothFreeSlotsSensor(SensorEntity):
 
         # Home Assistant registers adapters and proxies as devices with their
         # Bluetooth address; show the sensor there when possible.
-        if (device := async_find_linked_device(hass, source)) is not None:
+        device = async_link_entity_device(
+            hass, entry, source, entry.options.get(CONF_DEVICE_LINKS, {}).get(source)
+        )
+        if device is not None:
             self.device_entry = device
             self._attr_translation_key = "free_slots"
         else:
@@ -73,7 +76,6 @@ class BluetoothFreeSlotsSensor(SensorEntity):
                 name=entry.title,
                 entry_type=DeviceEntryType.SERVICE,
             )
-        entry.runtime_data.links[source] = device.id if device else None
 
     async def async_added_to_hass(self) -> None:
         """Subscribe to allocation changes."""

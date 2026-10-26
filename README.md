@@ -69,9 +69,17 @@ After a Home Assistant restart, `last_allocation_change` starts at integration s
 
 ## Device placement
 
-When another integration already has a device with the monitored Bluetooth address (for example a lock or a sensor integration), the binary sensor is shown on that device, next to the device's own entities. The name entered during setup is then only used as the config entry title.
+By default the binary sensor is shown on another integration's device that has the monitored Bluetooth address, next to the device's own entities. When several integrations register the same address, for example a Yale lock's Bluetooth integration (`yalexs_ble`) and its cloud integration (`yale`), the device of the Bluetooth integration is preferred. The name entered during setup is then only used as the config entry title.
 
 Otherwise the integration creates its own device with the entered name. If a matching device appears later, for example when the device's own integration is set up afterwards, the sensor moves to it automatically and the integration's own device is removed. If the matching device is removed, the sensor moves back to its own device. The entity ID does not change in either case.
+
+### Choosing the device yourself
+
+Only some integrations register their devices with a Bluetooth address. To show the sensor on any other device, or to override the automatic choice, select **Show on device** while adding the monitor, or later under **Settings -> Devices & services -> Bluetooth Connection Monitor -> Configure**. Leave the field empty to go back to automatic placement.
+
+A chosen device is kept across restarts and is never replaced by an automatic match. If the chosen device is removed, the sensor falls back to automatic placement and a repair issue asks you to choose a device again.
+
+The options of the connection-slot entry offer the same choice for each adapter or proxy sensor.
 
 ## Connection slots
 
@@ -188,7 +196,7 @@ Bluetooth Connection Monitor never creates Bluetooth connections or reserves Blu
 
 ## Troubleshooting
 
-**Settings -> Devices & services -> Bluetooth Connection Monitor -> ⋮ -> Download diagnostics** returns the current allocation snapshot, the device placement of the sensors and the latest allocation error. The file contains Bluetooth addresses; review it before sharing it publicly.
+**Settings -> Devices & services -> Bluetooth Connection Monitor -> ⋮ -> Download diagnostics** returns the current allocation snapshot, the chosen and actual device placement of the sensors and the latest allocation error. The file contains Bluetooth addresses; review it before sharing it publicly.
 
 ## History and database
 

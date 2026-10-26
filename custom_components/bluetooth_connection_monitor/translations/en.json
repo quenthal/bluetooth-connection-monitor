@@ -29,12 +29,14 @@
       },
       "name": {
         "title": "Name the monitor",
-        "description": "Bluetooth address: {address}\nDetected Bluetooth name: {bluetooth_name}\n\nIf another integration already has a device with this Bluetooth address, the sensor is shown on that device.",
+        "description": "Bluetooth address: {address}\nDetected Bluetooth name: {bluetooth_name}\n\nThe sensor is shown on another integration's device with this Bluetooth address, preferring a Bluetooth integration over a cloud one. To choose the device yourself, select it below.",
         "data": {
-          "name": "Name"
+          "name": "Name",
+          "device_id": "Show on device"
         },
         "data_description": {
-          "name": "Used as the Home Assistant device name when no existing device has this Bluetooth address. The suggested value is editable."
+          "name": "Used as the Home Assistant device name when the sensor is not shown on another device. The suggested value is editable.",
+          "device_id": "Optional. Leave empty to find the device automatically by its Bluetooth address. A chosen device is kept until you change it here."
         }
       },
       "connection_slots": {
@@ -44,12 +46,37 @@
     },
     "error": {
       "empty_name": "Enter a name.",
-      "invalid_address": "Enter a valid Bluetooth MAC address."
+      "invalid_address": "Enter a valid Bluetooth MAC address.",
+      "own_device": "Choose a device of another integration."
     },
     "abort": {
       "already_configured": "This Bluetooth address is already monitored.",
       "slots_already_configured": "Connection slots are already monitored.",
       "no_allocated_devices": "No unmonitored, actively allocated Bluetooth devices were found. Use manual entry instead."
+    }
+  },
+  "options": {
+    "step": {
+      "device": {
+        "title": "Device of the sensor",
+        "description": "Bluetooth address: {address}\nCurrently shown on: {current_device}",
+        "data": {
+          "device_id": "Show on device"
+        },
+        "data_description": {
+          "device_id": "Optional. Leave empty to find the device automatically by its Bluetooth address. A chosen device is kept until you change it here."
+        }
+      },
+      "slots": {
+        "title": "Devices of the slot sensors",
+        "description": "Optionally choose the device each adapter or proxy sensor is shown on. Leave a field empty to find the device automatically by its Bluetooth address."
+      }
+    },
+    "error": {
+      "own_device": "Choose a device of another integration."
+    },
+    "abort": {
+      "no_slot_sources": "No Bluetooth adapters or proxies that report connection slots were found."
     }
   },
   "entity": {
@@ -71,6 +98,10 @@
     "incompatible_api": {
       "title": "Bluetooth Connection Monitor is incompatible with this Home Assistant version",
       "description": "Home Assistant's Bluetooth integration no longer provides the connection-allocation methods this integration reads ({methods}). The monitors stay unavailable until a compatible version of Bluetooth Connection Monitor is installed."
+    },
+    "chosen_device_missing": {
+      "title": "Chosen device of {entry} no longer exists",
+      "description": "The device chosen for Bluetooth address {address} was removed, so the sensor is now placed automatically. Choose a device again in the options of {entry} under Settings -> Devices & services -> Bluetooth Connection Monitor."
     }
   }
 }

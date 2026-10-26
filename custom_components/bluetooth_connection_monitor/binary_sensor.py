@@ -14,8 +14,14 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_ADDRESS, CONF_BLUETOOTH_NAME, DATA_HUB, DOMAIN
-from .device_link import BluetoothConnectionMonitorConfigEntry, async_find_linked_device
+from .const import (
+    CONF_ADDRESS,
+    CONF_BLUETOOTH_NAME,
+    CONF_DEVICE_ID,
+    DATA_HUB,
+    DOMAIN,
+)
+from .device_link import BluetoothConnectionMonitorConfigEntry, async_link_entity_device
 from .hub import (
     AllocationSource,
     BluetoothConnectionMonitorHub,
@@ -54,9 +60,12 @@ class BluetoothConnectionAllocationSensor(BinarySensorEntity):
         self._address = str(entry.data[CONF_ADDRESS]).upper()
         self._attr_unique_id = self._address
 
-        # Show the sensor on the device's own page when another integration
-        # already knows the device by its Bluetooth address.
-        if (device := async_find_linked_device(hass, self._address)) is not None:
+        # Show the sensor on the device chosen by the user, or on the device's
+        # own page when another integration knows it by its Bluetooth address.
+        device = async_link_entity_device(
+            hass, entry, self._address, entry.options.get(CONF_DEVICE_ID)
+        )
+        if device is not None:
             self.device_entry = device
         else:
             bluetooth_name = entry.data.get(CONF_BLUETOOTH_NAME)
@@ -68,7 +77,6 @@ class BluetoothConnectionAllocationSensor(BinarySensorEntity):
                 manufacturer=None,
                 model=str(bluetooth_name or "Connection allocation monitor"),
             )
-        entry.runtime_data.links[self._address] = device.id if device else None
 
         self._allocation_signature = self._signature(
             self._hub.allocations_for(self._address)
